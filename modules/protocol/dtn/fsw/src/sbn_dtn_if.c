@@ -10,7 +10,7 @@ int SBN_DTN_Init(int Version)
 {
     if (Version != 1)
     {
-        CFE_EVS_SendEvent(SBN_DTN_CONFIG_EID, CFE_EVS_ERROR, "mismatching version %d (SBN app reports %d)", Version, 1);
+        CFE_EVS_SendEvent(SBN_DTN_CONFIG_EID, CFE_EVS_EventType_ERROR, "mismatching version %d (SBN app reports %d)", Version, 1);
         return SBN_ERROR;
     } /* end if */
 
@@ -47,19 +47,19 @@ int SBN_DTN_InitNet(SBN_NetInterface_t *Net)
 
     if (bp_attach() < 0)
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "unable to attach to DTN BP");
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "unable to attach to DTN BP");
         return SBN_ERROR;
     } /* end if */
 
     if (ionStartAttendant(&NetData->Attendant))
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "unable to start attendant");
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "unable to start attendant");
         return SBN_ERROR;
     } /* end if */
 
     if (bp_open(NetData->EIN, &NetData->SAP) < 0)
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "unable to open EIN %s", NetData->EIN);
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "unable to open EIN %s", NetData->EIN);
         return SBN_ERROR;
     } /* end if */
 
@@ -104,7 +104,7 @@ int SBN_DTN_Send(SBN_PeerInterface_t *Peer, SBN_MsgType_t MsgType, SBN_MsgSz_t M
     Object Extent = sdr_malloc(NetData->SendSDR, sizeof(SendBuf));
     if (!Extent)
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "unable to allocate extent");
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "unable to allocate extent");
         return SBN_ERROR;
     } /* end if */
 
@@ -112,7 +112,7 @@ int SBN_DTN_Send(SBN_PeerInterface_t *Peer, SBN_MsgType_t MsgType, SBN_MsgSz_t M
 
     if (sdr_end_xn(NetData->SendSDR) < 0)
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "no space for ZCO extent");
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "no space for ZCO extent");
         return SBN_ERROR;
     } /* end if */
 
@@ -120,7 +120,7 @@ int SBN_DTN_Send(SBN_PeerInterface_t *Peer, SBN_MsgType_t MsgType, SBN_MsgSz_t M
         ionCreateZco(ZcoSdrSource, Extent, 0, sizeof(SendBuf), BP_STD_PRIORITY, 0, ZcoOutbound, &NetData->Attendant);
     if (BundleZCO == 0 || BundleZCO == (Object)ERROR)
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "can't create ZCO extent");
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "can't create ZCO extent");
         return SBN_ERROR;
     } /* end if */
 
@@ -128,7 +128,7 @@ int SBN_DTN_Send(SBN_PeerInterface_t *Peer, SBN_MsgType_t MsgType, SBN_MsgSz_t M
     if (bp_send(NULL, PeerData->EIN, NULL, 300, BP_STD_PRIORITY, NoCustodyRequested, 0, 0, NULL, BundleZCO,
                 &NewBundle) < 1)
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "bpsource can't send ADU");
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "bpsource can't send ADU");
         return SBN_ERROR;
     } /* end if */
 
@@ -155,7 +155,7 @@ int SBN_DTN_Recv(SBN_NetInterface_t *Net, SBN_MsgType_t *MsgTypePtr, SBN_MsgSz_t
 
     if (bp_receive(NetData->SAP, &Delivery, TimeoutSecs) < 0)
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "BP receive returned an error");
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "BP receive returned an error");
         return SBN_ERROR;
     } /* end if */
 
@@ -186,7 +186,7 @@ int SBN_DTN_Recv(SBN_NetInterface_t *Net, SBN_MsgType_t *MsgTypePtr, SBN_MsgSz_t
     sdr_exit_xn(NetData->RecvSDR);
     if (ContentLength > sizeof(RecvBuf))
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "Received message too large for buffer. (Bufsize=%d Msg=%d)",
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "Received message too large for buffer. (Bufsize=%d Msg=%d)",
                           sizeof(RecvBuf), ContentLength);
         return SBN_ERROR;
     } /* end if */
@@ -197,7 +197,7 @@ int SBN_DTN_Recv(SBN_NetInterface_t *Net, SBN_MsgType_t *MsgTypePtr, SBN_MsgSz_t
     int Len = zco_receive_source(NetData->RecvSDR, &Reader, ContentLength, (char *)&RecvBuf);
     if (sdr_end_xn(NetData->RecvSDR) < 0 || Len < 0)
     {
-        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_ERROR, "Can't handle delivery.");
+        CFE_EVS_SendEvent(SBN_DTN_SOCK_EID, CFE_EVS_EventType_ERROR, "Can't handle delivery.");
         return SBN_ERROR;
     } /* end if */
 

@@ -31,6 +31,7 @@
 #include "cfe_platform_cfg.h"
 #include "cfe_msgids.h"
 #include "cfe_version.h"
+#include "cfe_evs_msg.h"
 
 /** \brief SBN global application data, indexed by AppID. */
 SBN_App_t SBN;
@@ -275,11 +276,6 @@ void SBN_RecvPeerTask(void)
 {
     RecvPeerTaskData_t D;
     memset(&D, 0, sizeof(D));
-    if (CFE_ES_RegisterChildTask() != CFE_SUCCESS)
-    {
-        EVSSendErr(SBN_PEERTASK_EID, "unable to register child task");
-        return;
-    } /* end if */
 
     D.RecvTaskID = OS_TaskGetId();
 
@@ -367,11 +363,6 @@ void SBN_RecvNetTask(void)
     static const char FAIL_PREFIX_RUNNING[] = "ERROR: during SBN Receive Net Task:";
     RecvNetTaskData_t D;
     memset(&D, 0, sizeof(D));
-    if (CFE_ES_RegisterChildTask() != CFE_SUCCESS)
-    {
-        EVSSendErr(SBN_PEERTASK_EID, "%s unable to register child task", FAIL_PREFIX_STARTUP);
-        return;
-    } /* end if */
 
     D.RecvTaskID = OS_TaskGetId();
 
@@ -603,12 +594,6 @@ void SBN_SendTask(void)
     Filter_Context.MySpacecraftID = CFE_PSP_GetSpacecraftId();
 
     memset(&D, 0, sizeof(D));
-
-    if (CFE_ES_RegisterChildTask() != CFE_SUCCESS)
-    {
-        EVSSendErr(SBN_PEERTASK_EID, "unable to register child task");
-        return;
-    } /* end if */
 
     D.SendTaskID = OS_TaskGetId();
 
@@ -1536,7 +1521,7 @@ static SBN_Status_t Init(void)
     EVSSendInfo(SBN_INIT_EID,
                 "initialized (CFE_PLATFORM_CPU_NAME='%s' ProcessorID=%d SpacecraftId=%d %s "
                 "SBN.AppID=%d...",
-                CFE_PLATFORM_CPU_NAME, (int)CFE_PSP_GetProcessorId(), (int)CFE_PSP_GetSpacecraftId(), bit_order, (int)SBN.AppID);
+                CFE_PSP_GetProcessorName(), (int)CFE_PSP_GetProcessorId(), (int)CFE_PSP_GetSpacecraftId(), bit_order, (int)SBN.AppID);
     EVSSendInfo(SBN_INIT_EID, "...SBN_IDENT=%s CMD_MID=0x%04X)", SBN_IDENT, SBN_CMD_MID);
 
     SBN_InitializeCounters();
@@ -1582,7 +1567,7 @@ static SBN_Status_t Cleanup(void)
     for(int i = 0; i < SBN_MAX_SUBS_PER_PEER + 1; i++) {
       SBN.Subs[i].InUseCtr = 0;
       SBN.Subs[i].MsgID = 0;
-      SBN.Subs[i].QoS = CFE_SB_Default_Qos;
+      SBN.Subs[i].QoS = CFE_SB_DEFAULT_QOS;
     }
 
     SBN.SubCnt = 0;
@@ -1603,9 +1588,6 @@ void SBN_AppMain(void)
     CFE_ES_TaskInfo_t TaskInfo;
     uint32            Status    = CFE_SUCCESS;
     uint32            RunStatus = CFE_ES_RunStatus_APP_RUN, AppID = 0;
-
-    if (CFE_ES_RegisterApp() != CFE_SUCCESS)
-        return;
 
     if (CFE_EVS_Register(NULL, 0, CFE_EVS_NO_FILTER != CFE_SUCCESS))
         return;

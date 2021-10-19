@@ -218,7 +218,7 @@ typedef struct
      * @param SpacecraftIDPtr[out] The Spacecraft ID of the sender
      * @param Msg[out] The SBN message payload (CCSDS message, sub/unsub, ensure it is at least
      * CFE_MISSION_SB_MAX_SB_MSG_SIZE)
-     * @return TRUE if we were unable to unpack/verify the message.
+     * @return true if we were unable to unpack/verify the message.
      *
      * @sa PackMsg
      */

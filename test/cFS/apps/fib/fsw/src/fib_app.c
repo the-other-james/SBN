@@ -12,9 +12,9 @@ void FIB_AppMain(void)
     Fib_AppData.prev1 = 1;
     Fib_AppData.prev2 = 1;
 
-    CFE_SB_InitMsg((CFE_SB_Msg_t *)&tlm, FIB_TLM_MID, sizeof(tlm), true);
+    CFE_MSG_Init((CFE_MSG_Message_t *)&tlm,  FIB_TLM_MID,  sizeof(tlm));
 
-    CFE_ES_RegisterApp();
+    CFE_ES_RegisterApp;
 
     CFE_EVS_Register(NULL, 0, CFE_EVS_NO_FILTER);
 
@@ -35,16 +35,16 @@ void FIB_AppMain(void)
     CFE_EVS_SendEvent(FIB_EID, CFE_EVS_EventType_INFORMATION, "Fib App Initialized.");
 
     tlm.fib = 1;
-    CFE_SB_TimeStampMsg((CFE_SB_Msg_t *)&tlm);
-    CFE_SB_SendMsg((CFE_SB_Msg_t *)&tlm); /* send out the 1, 1; as is tradition */
-    CFE_SB_SendMsg((CFE_SB_Msg_t *)&tlm);
+    CFE_SB_TimeStampMsg((CFE_MSG_Message_t *)&tlm);
+    CFE_SB_TransmitMsg((CFE_MSG_Message_t *)&tlm, true); /* send out the 1, 1; as is tradition */
+    CFE_SB_TransmitMsg((CFE_MSG_Message_t *)&tlm, true);
 
     while (CFE_ES_RunLoop(&Fib_AppData.RunStatus) == true)
     {
         /* Pend on receipt of command packet */
-        CFE_SB_MsgPtr_t MsgPtr;
+        CFE_MSG_Message_t * MsgPtr;
 
-        status = CFE_SB_RcvMsg(&MsgPtr, Fib_AppData.Pipe, CFE_SB_PEND_FOREVER);
+        status = CFE_SB_ReceiveBuffer((CFE_SB_Buffer_t **)&MsgPtr,  Fib_AppData.Pipe,  CFE_SB_PEND_FOREVER);
 
         if (status == CFE_SUCCESS)
         {
@@ -52,8 +52,8 @@ void FIB_AppMain(void)
             Fib_AppData.prev2 = Fib_AppData.prev1;
             Fib_AppData.prev1 = tlm.fib;
 
-            CFE_SB_TimeStampMsg((CFE_SB_Msg_t *)&tlm);
-            CFE_SB_SendMsg((CFE_SB_Msg_t *)&tlm);
+            CFE_SB_TimeStampMsg((CFE_MSG_Message_t *)&tlm);
+            CFE_SB_TransmitMsg((CFE_MSG_Message_t *)&tlm, true);
         }
         else
         {

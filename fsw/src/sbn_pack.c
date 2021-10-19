@@ -1,4 +1,5 @@
 #include "sbn_pack.h"
+#include "cfe_endian.h"
 #include <string.h> /* memcpy */
 
 #undef CFE_MAKE_BIG32

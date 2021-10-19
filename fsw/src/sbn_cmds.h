@@ -21,7 +21,7 @@
 **  \param [in]   MessagePtr   A #CFE_MSG_Message_t pointer that
 **                             references the software bus message
 **
-**  \sa #CFE_SB_RcvMsg
+**  \sa #CFE_SB_ReceiveBuffer
 **
 *************************************************************************/
 void SBN_HandleCommand(CFE_MSG_Message_t *MessagePtr);
@@ -38,7 +38,7 @@ void SBN_HandleCommand(CFE_MSG_Message_t *MessagePtr);
 **       is maintained and used outside of the housekeeping functions
 **       and should not change regularly.
 **
-**  \param [in]   MessagePtr   A #CFE_SB_MsgPtr_t pointer that
+**  \param [in]   MessagePtr   A #CFE_MSG_Message_t * pointer that
 **                             references the software bus message
 **
 **  \sa #SBN_ResetCountersCmd

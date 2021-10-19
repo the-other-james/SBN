@@ -19,7 +19,7 @@ int SBN_SERIAL_Init(int Version)
 {
     if (Version != 1)
     {
-        CFE_EVS_SendEvent(SBN_SERIAL_CONFIG_EID, CFE_EVS_ERROR, "mismatching version %d (SBN app reports %d)", Version,
+        CFE_EVS_SendEvent(SBN_SERIAL_CONFIG_EID, CFE_EVS_EventType_ERROR, "mismatching version %d (SBN app reports %d)", Version,
                           1);
         return SBN_ERROR;
     } /* end if */
@@ -67,23 +67,23 @@ static int TrySerial(SBN_SERIAL_Peer_t *PeerData)
     OS_GetLocalTime(&CurrentTime);
     if (CurrentTime.seconds < PeerData->LastConnTry.seconds + SBN_SERIAL_CONNTRY_TIME)
     {
-        return FALSE;
+        return false;
     }
 
     int FD = open(PeerData->Filename, OS_READ_WRITE);
     if (FD < 0)
     {
-        CFE_EVS_SendEvent(SBN_SERIAL_DEVICE_EID, CFE_EVS_ERROR, "Unable to open device: %s\n", PeerData->Filename);
-        return FALSE;
+        CFE_EVS_SendEvent(SBN_SERIAL_DEVICE_EID, CFE_EVS_EventType_ERROR, "Unable to open device: %s\n", PeerData->Filename);
+        return false;
     }
 
     struct termios tty;
 
     if (tcgetattr(FD, &tty) != 0)
     {
-        CFE_EVS_SendEvent(SBN_SERIAL_CONFIG_EID, CFE_EVS_ERROR, "unable to get attrs on %s", PeerData->Filename);
+        CFE_EVS_SendEvent(SBN_SERIAL_CONFIG_EID, CFE_EVS_EventType_ERROR, "unable to get attrs on %s", PeerData->Filename);
         close(FD);
-        return FALSE;
+        return false;
     }
 
     cfsetspeed(&tty, B115200);
@@ -92,20 +92,20 @@ static int TrySerial(SBN_SERIAL_Peer_t *PeerData)
 
     if (tcsetattr(FD, TCSANOW, &tty) != 0)
     {
-        CFE_EVS_SendEvent(SBN_SERIAL_CONFIG_EID, CFE_EVS_ERROR, "unable to set attrs on %s", PeerData->Filename);
+        CFE_EVS_SendEvent(SBN_SERIAL_CONFIG_EID, CFE_EVS_EventType_ERROR, "unable to set attrs on %s", PeerData->Filename);
         close(FD);
-        return FALSE;
+        return false;
     }
 
     /* all good! */
 
-    CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_INFORMATION,
+    CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_EventType_INFORMATION,
                       "Serial device %s (task=%d, fd=%d) attached, flushing.", PeerData->Filename, OS_TaskGetId(), FD);
 
-    PeerData->SerialConn = TRUE;
+    PeerData->SerialConn = true;
     PeerData->FD         = FD;
 
-    return TRUE;
+    return true;
 }
 
 /**
@@ -142,10 +142,10 @@ int SBN_SERIAL_PollPeer(SBN_PeerInterface_t *Peer)
 
     if (SBN_SERIAL_PEER_TIMEOUT > 0 && CurrentTime.seconds - Peer->LastRecv.seconds > SBN_SERIAL_PEER_TIMEOUT)
     {
-        CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_INFORMATION, "CPU %d disconnected", Peer->ProcessorID);
+        CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_EventType_INFORMATION, "CPU %d disconnected", Peer->ProcessorID);
 
         close(PeerData->FD);
-        PeerData->Connected = FALSE;
+        PeerData->Connected = false;
 
         SBN_Disconnected(Peer);
     } /* end if */
@@ -166,10 +166,10 @@ int SBN_SERIAL_Send(SBN_PeerInterface_t *Peer, SBN_MsgType_t MsgType, SBN_MsgSz_
     size_t sent_size = write(PeerData->FD, &SendBuf, MsgSz + SBN_PACKED_HDR_SZ);
     if (sent_size < MsgSz + SBN_PACKED_HDR_SZ)
     {
-        CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_INFORMATION, "CPU %d disconnected", Peer->ProcessorID);
+        CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_EventType_INFORMATION, "CPU %d disconnected", Peer->ProcessorID);
 
         close(PeerData->FD);
-        PeerData->Connected = FALSE;
+        PeerData->Connected = false;
 
         SBN_Disconnected(Peer);
     } /* end if */
@@ -206,13 +206,13 @@ int SBN_SERIAL_Recv(SBN_NetInterface_t *Net, SBN_PeerInterface_t *Peer, SBN_MsgT
 
     if (Result < 0)
     {
-        CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_INFORMATION,
+        CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_EventType_INFORMATION,
                           "Read error TaskID=%d, FD=%d, errno=%d, CPU=%d disconnected", OS_TaskGetId(), PeerData->FD,
                           errno, Peer->ProcessorID);
 
         close(PeerData->FD);
-        PeerData->Connected  = FALSE;
-        PeerData->SerialConn = FALSE;
+        PeerData->Connected  = false;
+        PeerData->SerialConn = false;
 
         SBN_Disconnected(Peer);
 
@@ -233,23 +233,23 @@ int SBN_SERIAL_Recv(SBN_NetInterface_t *Net, SBN_PeerInterface_t *Peer, SBN_MsgT
 
         if (Received < 0)
         {
-            CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_INFORMATION,
+            CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_EventType_INFORMATION,
                               "Read error FD=%d, errno=%d, CPU=%d disconnected", PeerData->FD, errno,
                               Peer->ProcessorID);
 
             close(PeerData->FD);
-            PeerData->Connected  = FALSE;
-            PeerData->SerialConn = FALSE;
+            PeerData->Connected  = false;
+            PeerData->SerialConn = false;
 
             SBN_Disconnected(Peer);
 
             return SBN_IF_EMPTY;
         } /* end if */
 
-        if (PeerData->Connected == FALSE)
+        if (PeerData->Connected == false)
         {
-            CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_INFORMATION, "CPU=%d connected", Peer->ProcessorID);
-            PeerData->Connected = TRUE;
+            CFE_EVS_SendEvent(SBN_SERIAL_DEBUG_EID, CFE_EVS_EventType_INFORMATION, "CPU=%d connected", Peer->ProcessorID);
+            PeerData->Connected = true;
 
             SBN_Connected(Peer);
         } /* end if */
@@ -258,7 +258,7 @@ int SBN_SERIAL_Recv(SBN_NetInterface_t *Net, SBN_PeerInterface_t *Peer, SBN_MsgT
 
         if (Received >= ToRead)
         {
-            PeerData->ReceivingBody = TRUE; /* and continue on to read body */
+            PeerData->ReceivingBody = true; /* and continue on to read body */
         }
         else
         {
@@ -288,7 +288,7 @@ int SBN_SERIAL_Recv(SBN_NetInterface_t *Net, SBN_PeerInterface_t *Peer, SBN_MsgT
     /* we have the complete body, decode! */
     if (SBN_UnpackMsg(&RecvBufs[PeerData->BufNum], MsgSzPtr, MsgTypePtr, CpuIDPtr, MsgBuf))
     {
-        PeerData->Connected = TRUE;
+        PeerData->Connected = true;
         SBN_Connected(Peer);
     }
     else
@@ -296,7 +296,7 @@ int SBN_SERIAL_Recv(SBN_NetInterface_t *Net, SBN_PeerInterface_t *Peer, SBN_MsgT
         /* TODO: what to do if we can't unpack the message? */
     } /* end if */
 
-    PeerData->ReceivingBody = FALSE;
+    PeerData->ReceivingBody = false;
     PeerData->RecvSz        = 0;
 
     return SBN_SUCCESS;

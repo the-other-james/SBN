@@ -146,13 +146,13 @@ int32 SBN_CheckForSPWNetProtoMsg(SBN_InterfaceData *Peer, SBN_NetProtoMsg_t *Pro
     dataRead = SPW_GetData(peer->spwEntry, (*void)ProtoMsgBuf, sizeof(SBN_NetProtoMsg_t), &error);
     if (dataRead > 0 && error == SPW_FREAD_NO_ERROR)
     {                    /* Positive number indicates byte length of message */
-        return SBN_TRUE; /* Message available and no errors */
+        return SBN_true; /* Message available and no errors */
     }
 
     linkStatus = SPW_GetStatus(peer->spwEntry, SBN_SPW_LINK_STATUS);
     if (!linkStatus | error != SPW_FREAD_NO_ERROR)
     {
-        CFE_EVS_SendEvent(SBN_NET_RCV_PROTO_ERR_EID, CFE_EVS_ERROR,
+        CFE_EVS_SendEvent(SBN_NET_RCV_PROTO_ERR_EID, CFE_EVS_EventType_ERROR,
                           "%s:Recv err in CheckForNetProtoMsgs linkStatus=%d ferror=%d" CFE_CPU_NAME, linkStatus,
                           error);
         ProtoMsgBuf->Hdr.Type = SBN_NO_MSG;
@@ -217,7 +217,7 @@ int SBN_SPWRcvMsg(SBN_InterfaceData *Peer, NetDataUnion *DataMsgBuf)
         */
         if (ScanfStatus != SBN_SPW_ITEMS_PER_FILE_LINE)
         {
-            CFE_EVS_SendEvent(SBN_INV_LINE_EID, CFE_EVS_ERROR, "%s:Invalid SBN peer file line,exp %d items,found %d",
+            CFE_EVS_SendEvent(SBN_INV_LINE_EID, CFE_EVS_EventType_ERROR, "%s:Invalid SBN peer file line,exp %d items,found %d",
                               CFE_CPU_NAME, SBN_SPW_ITEMS_PER_FILE_LINE, ScanfStatus);
             return SBN_ERROR;
         }
