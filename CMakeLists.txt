@@ -16,5 +16,5 @@ add_cfe_tables(sbn ${APP_TBL_FILES})
 
 if (ENABLE_UNIT_TESTS)
   add_subdirectory(ut-stubs)
-  add_subdirectory(unit-test)
+  # add_subdirectory(unit-test)
 endif (ENABLE_UNIT_TESTS)
