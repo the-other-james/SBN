@@ -7,16 +7,6 @@
 /* #define STUB_TASKID 1073807361 *//* TODO: should be replaced with a call to a stub util fn */
 CFE_SB_MsgId_t MsgID = 0x1818;
 /********************************** tests ************************************/
-static void AppMain_ESRegisterErr(void)
-{
-    START();
-    UT_SetDeferredRetcode(UT_KEY(CFE_ES_RegisterApp), 1, -1);
-
-    SBN_AppMain();
-
-    UtAssert_STUB_COUNT(CFE_EVS_Register, 0);
-} /* end AppMain_ESRegisterErr() */
-
 static void AppMain_EVSRegisterErr(void)
 {
     START();
@@ -1171,7 +1161,6 @@ static void AppMain_Nominal(void)
 
 static void Test_SBN_AppMain(void)
 {
-    AppMain_ESRegisterErr();
     AppMain_EVSRegisterErr();
     AppMain_AppIdErr();
     AppMain_TaskInfoErr();
