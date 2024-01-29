@@ -234,7 +234,7 @@ SBN_Status_t SBN_Disconnected(SBN_PeerInterface_t *Peer)
           Peer->ProcessorID,
           Status);
     }
-    Peer->Pipe = 0;
+    Peer->Pipe = CFE_SB_INVALID_PIPE;
 
     Peer->SendCnt = 0;
     Peer->RecvCnt = 0;
@@ -1265,7 +1265,7 @@ static SBN_Status_t UnloadPeer(SBN_PeerInterface_t *Peer)
   Peer->SpacecraftID = 0;
   Peer->Net = NULL;
   Peer->TaskFlags = 0;
-  Peer->Pipe = 0;
+  Peer->Pipe = CFE_SB_INVALID_PIPE;
   Peer->FilterCnt = 0;
 
   return SBN_SUCCESS;
