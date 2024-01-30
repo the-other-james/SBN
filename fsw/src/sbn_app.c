@@ -401,7 +401,7 @@ void SBN_RecvNetTask(void)
         D.Peer = SBN_GetPeer(D.Net, D.ProcessorID, D.SpacecraftID);
         if (!D.Peer)
         {
-            EVSSendErr(SBN_PEERTASK_EID, "%s: unknown peer (Net=%d, ProcessorID=%d, SpacecraftID=%d)", __func__, D.Net, (int)D.ProcessorID, D.SpacecraftID);
+            EVSSendErr(SBN_PEERTASK_EID, "%s: unknown peer (Net=%p, ProcessorID=%d, SpacecraftID=%d)", __func__, (void *)D.Net, (int)D.ProcessorID, D.SpacecraftID);
             break;
         } /* end if */
 
@@ -465,7 +465,7 @@ SBN_Status_t SBN_RecvNetMsgs(void)
 
                 if (!Peer)
                 {
-                    EVSSendInfo(SBN_PEERTASK_EID, "%s: unknown peer (Net=%d, ProcessorID=%d, SpacecraftID=%d)", __func__, Net, (int)ProcessorID, SpacecraftID);
+                    EVSSendInfo(SBN_PEERTASK_EID, "%s: unknown peer (Net=%p, ProcessorID=%d, SpacecraftID=%d)", __func__, (void *)Net, (int)ProcessorID, SpacecraftID);
                     /* may be a misconfiguration on my part...? continue processing msgs... */
                     continue;
                 } /* end if */
@@ -1431,8 +1431,9 @@ static SBN_Status_t Init(void)
 
     EVSSendInfo(SBN_INIT_EID,
                 "initialized (ProcessorID=%d SpacecraftId=%d %s "
-                "SBN.AppID=%d...",
-                (int)CFE_PSP_GetProcessorId(), (int)CFE_PSP_GetSpacecraftId(), bit_order, (int)SBN.AppID);
+                "SBN.AppID=%lu...",
+                (int)CFE_PSP_GetProcessorId(), (int)CFE_PSP_GetSpacecraftId(), bit_order,
+                CFE_ResourceId_ToInteger(CFE_RESOURCEID_UNWRAP(SBN.AppID)));
 
     EVSSendInfo(SBN_INIT_EID, "...SBN_IDENT=%s CMD_MID=0x%04X)", SBN_IDENT, SBN_CMD_MID);
 
@@ -1487,18 +1488,16 @@ void SBN_AppMain(void)
     static const char FAIL_PREFIX[] = "ERROR: could not start SBN:";
     CFE_ES_TaskInfo_t TaskInfo;
     uint32            Status    = CFE_SUCCESS;
-    uint32            RunStatus = CFE_ES_RunStatus_APP_RUN, AppID = 0;
+    uint32            RunStatus = CFE_ES_RunStatus_APP_RUN;
 
     if (CFE_EVS_Register(NULL, 0, CFE_EVS_NO_FILTER != CFE_SUCCESS))
         return;
 
-    if (CFE_ES_GetAppID(&AppID) != CFE_SUCCESS)
+    if (CFE_ES_GetAppID(&(SBN.AppID)) != CFE_SUCCESS)
     {
         EVSSendCrit(SBN_INIT_EID, "%s unable to get AppID", FAIL_PREFIX);
         return;
     }
-
-    SBN.AppID = AppID;
 
     /* load my TaskName so I can ignore messages I send out to SB */
     CFE_ES_TaskId_t TskId;
@@ -1608,7 +1607,7 @@ SBN_Status_t SBN_ProcessNetMsg(SBN_NetInterface_t *Net, SBN_MsgType_t MsgType, C
 
     if (!Peer)
     {
-        EVSSendErr(SBN_PEERTASK_EID, "%s: %s unknown peer (Net=%d, ProcessorID=%d, SpacecraftID=%d)", __func__, FAIL_PREFIX, Net, (int)ProcessorID, SpacecraftID);
+        EVSSendErr(SBN_PEERTASK_EID, "%s: %s unknown peer (Net=%p, ProcessorID=%d, SpacecraftID=%d)", __func__, FAIL_PREFIX, (void *)Net, (int)ProcessorID, SpacecraftID);
         return SBN_ERROR;
     } /* end if */
 

@@ -73,7 +73,7 @@ typedef struct
     SBN_NetInterface_t Nets[SBN_MAX_NETS];
 
     /** \brief The application ID provided by ES */
-    CFE_ES_AppID_t AppID;
+    CFE_ES_AppId_t AppID;
 
     /** \brief The application full name provided by SB */
     char App_FullName[(OS_MAX_API_NAME * 2)];
