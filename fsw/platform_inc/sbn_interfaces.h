@@ -112,13 +112,13 @@ struct SBN_PeerInterface_s
      * @brief The ID of the task created to pend on the pipe and send messages
      * to the net as soon as they are read. 0 if there is no send task.
      */
-    OS_TaskID_t SendTaskID;
+    CFE_ES_TaskId_t SendTaskID;
 
     /**
      * @brief The ID of the task created to pend on the net and send messages
      * to the software bus as soon as they are read. 0 if there is no recv task.
      */
-    OS_TaskID_t RecvTaskID; /* for mesh nets */
+    CFE_ES_TaskId_t RecvTaskID; /* for mesh nets */
 
     /** @brief The pipe ID used to read messages destined for the peer. */
     CFE_SB_PipeId_t Pipe;
@@ -161,10 +161,10 @@ struct SBN_NetInterface_s
      * to communicate to peers. These tasks are used for those networks. ID's
      * are 0 if there is no task.
      */
-    OS_TaskID_t  SendTaskID;
+    CFE_ES_TaskId_t  SendTaskID;
     OS_MutexID_t SendMutex;
 
-    OS_TaskID_t RecvTaskID;
+    CFE_ES_TaskId_t RecvTaskID;
 
     SBN_IfOps_t *IfOps; /* convenience */
 

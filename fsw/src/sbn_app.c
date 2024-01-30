@@ -255,7 +255,7 @@ SBN_Status_t SBN_Disconnected(SBN_PeerInterface_t *Peer)
 typedef struct
 {
     SBN_Status_t         Status;
-    OS_TaskID_t          RecvTaskID;
+    CFE_ES_TaskId_t      RecvTaskID;
     SBN_PeerIdx_t        PeerIdx;
     SBN_NetIdx_t         NetIdx;
     SBN_PeerInterface_t *Peer;
@@ -276,7 +276,8 @@ void SBN_RecvPeerTask(void)
     RecvPeerTaskData_t D;
     memset(&D, 0, sizeof(D));
 
-    D.RecvTaskID = OS_TaskGetId();
+    // TODO: check status
+    CFE_ES_GetTaskID(&D.RecvTaskID);
 
     for (D.NetIdx = 0; D.NetIdx < SBN.NetCnt; D.NetIdx++)
     {
@@ -289,7 +290,7 @@ void SBN_RecvPeerTask(void)
         for (D.PeerIdx = 0; D.PeerIdx < D.Net->PeerCnt; D.PeerIdx++)
         {
             D.Peer = &D.Net->Peers[D.PeerIdx];
-            if (D.Peer->RecvTaskID == D.RecvTaskID)
+            if (CFE_RESOURCEID_TEST_EQUAL(D.Peer->RecvTaskID, D.RecvTaskID))
             {
                 break;
             } /* end if */
@@ -324,7 +325,7 @@ void SBN_RecvPeerTask(void)
 
             if (D.Status != SBN_SUCCESS)
             {
-                D.Peer->RecvTaskID = 0;
+                D.Peer->RecvTaskID = CFE_ES_TASKID_UNDEFINED;
                 return;
             } /* end if */
         }
@@ -332,7 +333,7 @@ void SBN_RecvPeerTask(void)
         {
             EVSSendErr(SBN_PEER_EID, "recv error (%d)", D.Status);
             D.Peer->RecvErrCnt++;
-            D.Peer->RecvTaskID = 0;
+            D.Peer->RecvTaskID = CFE_ES_TASKID_UNDEFINED;
             return;
         } /* end if */
     }     /* end while */
@@ -344,7 +345,7 @@ typedef struct RecvNetTaskData_s
     SBN_NetInterface_t * Net;
     SBN_PeerInterface_t *Peer;
     SBN_Status_t         Status;
-    OS_TaskID_t          RecvTaskID;
+    CFE_ES_TaskId_t      RecvTaskID;
     CFE_ProcessorID_t    ProcessorID;
     CFE_SpacecraftID_t   SpacecraftID;
     SBN_MsgType_t        MsgType;
@@ -363,12 +364,13 @@ void SBN_RecvNetTask(void)
     RecvNetTaskData_t D;
     memset(&D, 0, sizeof(D));
 
-    D.RecvTaskID = OS_TaskGetId();
+    // TODO: check status
+    CFE_ES_GetTaskID(&D.RecvTaskID);
 
     for (D.NetIdx = 0; D.NetIdx < SBN.NetCnt; D.NetIdx++)
     {
         D.Net = &SBN.Nets[D.NetIdx];
-        if (D.Net->RecvTaskID == D.RecvTaskID)
+        if (CFE_RESOURCEID_TEST_EQUAL(D.Net->RecvTaskID, D.RecvTaskID))
         {
             break;
         } /* end if */
@@ -415,7 +417,7 @@ void SBN_RecvNetTask(void)
     }     /* end while */
 
     /* Unset the task id so that it can be created if necessary */
-    D.Net->RecvTaskID = 0;
+    D.Net->RecvTaskID = CFE_ES_TASKID_UNDEFINED;
 } /* end SBN_RecvNetTask() */
 
 /**
@@ -534,7 +536,7 @@ SBN_Status_t SBN_SendNetMsg(SBN_MsgType_t MsgType, SBN_MsgSz_t MsgSz, void *Msg,
     SBN_NetInterface_t *Net        = Peer->Net;
     SBN_Status_t        SBN_Status = SBN_SUCCESS;
 
-    if (Peer->SendTaskID)
+    if (CFE_ResourceId_IsDefined(CFE_RESOURCEID_UNWRAP(Peer->SendTaskID)))
     {
         if (OS_MutSemTake(SBN.SendMutex) != OS_SUCCESS)
         {
@@ -555,7 +557,7 @@ SBN_Status_t SBN_SendNetMsg(SBN_MsgType_t MsgType, SBN_MsgSz_t MsgSz, void *Msg,
     /* for clients that need a poll or heartbeat, update time even when failing */
     OS_GetLocalTime(&Peer->LastSend);
 
-    if (Peer->SendTaskID)
+    if (CFE_ResourceId_IsDefined(CFE_RESOURCEID_UNWRAP(Peer->SendTaskID)))
     {
         if (OS_MutSemGive(SBN.SendMutex) != OS_SUCCESS)
         {
@@ -572,7 +574,7 @@ typedef struct
     SBN_Status_t         Status;
     SBN_NetIdx_t         NetIdx;
     SBN_PeerIdx_t        PeerIdx;
-    OS_TaskID_t          SendTaskID;
+    CFE_ES_TaskId_t      SendTaskID;
     CFE_MSG_Message_t   *MsgPtr;
     CFE_SB_MsgId_t       MsgID;
     SBN_NetInterface_t  *Net;
@@ -594,7 +596,8 @@ void SBN_SendTask(void)
 
     memset(&D, 0, sizeof(D));
 
-    D.SendTaskID = OS_TaskGetId();
+    // TODO: Check status
+    CFE_ES_GetTaskID(&D.SendTaskID);
 
     for (D.NetIdx = 0; D.NetIdx < SBN.NetCnt; D.NetIdx++)
     {
@@ -602,7 +605,7 @@ void SBN_SendTask(void)
         for (D.PeerIdx = 0; D.PeerIdx < D.Net->PeerCnt; D.PeerIdx++)
         {
             D.Peer = &D.Net->Peers[D.PeerIdx];
-            if (D.Peer->SendTaskID == D.SendTaskID)
+            if (CFE_RESOURCEID_TEST_EQUAL(D.Peer->SendTaskID, D.SendTaskID))
             {
                 break;
             } /* end if */
@@ -677,7 +680,7 @@ void SBN_SendTask(void)
     }     /* end while */
 
     /* mark peer as not having a task so that sending will create a new one */
-    D.Peer->SendTaskID = 0;
+    D.Peer->SendTaskID = CFE_ES_TASKID_UNDEFINED;
 } /* end SBN_SendTask() */
 
 /**
@@ -730,7 +733,7 @@ static SBN_Status_t CheckPeerPipes(void)
 
                 if (Peer->TaskFlags & SBN_TASK_SEND)
                 {
-                    if (!Peer->SendTaskID)
+                    if (!CFE_ResourceId_IsDefined(CFE_RESOURCEID_UNWRAP(Peer->SendTaskID)))
                     {
                         /* TODO: logic/controls to prevent hammering? */
                         char SendTaskName[32];
@@ -820,7 +823,7 @@ static SBN_Status_t PeerPoll(void)
 
         if (Net->IfOps->RecvFromNet && Net->TaskFlags & SBN_TASK_RECV)
         {
-            if (!Net->RecvTaskID)
+            if (!CFE_ResourceId_IsDefined(CFE_RESOURCEID_UNWRAP(Net->RecvTaskID)))
             {
                 EVSSendInfo(SBN_PEER_EID, "Creating recv task for net %d", (int)NetIdx);
 
@@ -847,7 +850,7 @@ static SBN_Status_t PeerPoll(void)
 
                 if (Net->IfOps->RecvFromPeer && Peer->TaskFlags & SBN_TASK_RECV)
                 {
-                    if (!Peer->RecvTaskID)
+                    if (!CFE_ResourceId_IsDefined(CFE_RESOURCEID_UNWRAP(Peer->RecvTaskID)))
                     {
                         /* TODO: add logic/controls to prevent hammering */
                         char RecvTaskName[32];
@@ -1241,7 +1244,7 @@ static SBN_Status_t UnloadPeer(SBN_PeerInterface_t *Peer)
 
   if (Peer->TaskFlags & SBN_TASK_SEND)
   {
-    if (Peer->SendTaskID)
+    if (CFE_ResourceId_IsDefined(CFE_RESOURCEID_UNWRAP(Peer->SendTaskID)))
     {
       if(CFE_ES_DeleteChildTask(Peer->SendTaskID) != CFE_SUCCESS) {
         EVSSendCrit(SBN_TBL_EID, "unable to delete send task for peer %d:%d", Peer->SpacecraftID, Peer->ProcessorID);
@@ -1252,7 +1255,7 @@ static SBN_Status_t UnloadPeer(SBN_PeerInterface_t *Peer)
 
   if (Peer->TaskFlags & SBN_TASK_RECV)
   {
-    if (Peer->RecvTaskID)
+    if (CFE_ResourceId_IsDefined(CFE_RESOURCEID_UNWRAP(Peer->RecvTaskID)))
     {
       if(CFE_ES_DeleteChildTask(Peer->RecvTaskID) != CFE_SUCCESS) {
         EVSSendCrit(SBN_TBL_EID, "unable to delete recv task for peer %d:%d", Peer->SpacecraftID, Peer->ProcessorID);
@@ -1281,12 +1284,12 @@ static SBN_Status_t UnloadNets(void)
         SBN_NetInterface_t *Net = &SBN.Nets[NetIdx];
         Net->Configured = false;
 
-        if(Net->RecvTaskID != 0) {
+        if(CFE_RESOURCEID_TEST_DEFINED(Net->RecvTaskID)) {
           if(CFE_ES_DeleteChildTask(Net->RecvTaskID) != CFE_SUCCESS) {
             EVSSendCrit(SBN_TBL_EID, "unable to delete receive task %d", NetIdx);
           }
 
-          Net->RecvTaskID = 0;
+          Net->RecvTaskID = CFE_ES_TASKID_UNDEFINED;
         }
 
         // UnloadNet assumes Peers are still valid
@@ -1498,7 +1501,9 @@ void SBN_AppMain(void)
     SBN.AppID = AppID;
 
     /* load my TaskName so I can ignore messages I send out to SB */
-    uint32 TskId = OS_TaskGetId();
+    CFE_ES_TaskId_t TskId;
+    // TODO: check status
+    CFE_ES_GetTaskID(&TskId);
     if ((Status = CFE_ES_GetTaskInfo(&TaskInfo, TskId)) != CFE_SUCCESS)
     {
         EVSSendErr(SBN_INIT_EID, "%s SBN failed to get task info (%d)", FAIL_PREFIX, (int)Status);
