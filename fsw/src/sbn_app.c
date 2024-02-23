@@ -458,6 +458,11 @@ SBN_Status_t SBN_RecvNetMsgs(void)
                     break; /* no (more) messages for this net, continue to next net */
                 }          /* end if */
 
+                if (SBN_Status == SBN_ERROR)
+                {
+                    break;
+                }
+
                 /* for UDP, the message received may not be from the peer
                  * expected.
                  */
